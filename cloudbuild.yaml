@@ -1,7 +1,7 @@
 # Define variables for project ID, image name, and tag.
 # Customize these values as needed.
 substitutions:
-  _PROJECT_ID: 'upgradlabs-1695429666985'  # Replace with your actual project ID.
+  _PROJECT_ID: 'ordinal-shell-413411'  # Replace with your actual project ID.
   _IMAGE_NAME: 'gcr.io/${_PROJECT_ID}/my-app'
   _TAG_NAME: '0.0.1'
   _REGION: 'us-central1'  # Replace with your preferred region.
