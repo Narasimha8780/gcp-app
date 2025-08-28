@@ -8,5 +8,5 @@ services:
     ports:
       - "9090:9090"   # host:container
     environment:
-      - PYTHONUNBUFFERED=1
+      - PORT=9090
     restart: unless-stopped
