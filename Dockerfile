@@ -1,16 +1,22 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9
+FROM python:3.9-slim
 
-# Set the working directory to /app
+# Prevent Python from writing .pyc and enable unbuffered logs
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Install dependencies first (better layer caching)
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the app
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
-
-#Expose the port 9090
+# Expose the port
 EXPOSE 9090
-# Run app.py when the container launches
+
+# Run the app
 CMD ["python", "app.py"]
