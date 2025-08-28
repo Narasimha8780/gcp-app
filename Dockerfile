@@ -10,7 +10,7 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
-#Expose the port 8080
-EXPOSE 8080
+#Expose the port 9090
+EXPOSE 9090
 # Run app.py when the container launches
 CMD ["python", "app.py"]
