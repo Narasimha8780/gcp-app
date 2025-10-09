@@ -17,7 +17,7 @@ def hello():
         </style>
     </head>
     <body>
-        <h1>Hello, World! branch-push-test-is-successful-for-local-test1</h1>
+        <h1>Hello, World! branch-push-test-is-successful-for-local-test2</h1>
     </body>
     </html>
     """
