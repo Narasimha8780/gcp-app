@@ -1,31 +1,38 @@
-# Define variables for project ID, image name, and tag.
-# Customize these values as needed.
-substitutions:
-  _PROJECT_ID: 'ordinal-shell-413411'  # Replace with your actual project ID.
-  _IMAGE_NAME: 'gcr.io/${_PROJECT_ID}/my-app'
-  _TAG_NAME: '0.0.1'
-  _REGION: 'us-central1'  # Replace with your preferred region.
-  _SERVICE_NAME: 'my-cloud-run-service'  # Replace with your preferred Cloud Run service name.
+options:
+ logging: CLOUD_LOGGING_ONLY  # Use Cloud Logging for logs
 
 steps:
+# Pull the cached image from Container Registry (with fallback for first build)
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', '${_IMAGE_NAME}:${_TAG_NAME}', '.']
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app:latest || exit 0']
+  id: Pulling cached image
 
-# Push the Docker image to Google Container Registry.
+# Build the container image with cache optimization
+- name: gcr.io/cloud-builders/docker
+  args: [
+    'build', 
+    '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app/$BRANCH_NAME:${COMMIT_SHA}',
+    '--cache-from', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app:latest',
+    '-f', 'Dockerfile', 
+    '.'
+  ]
+  id: Building the container image
+
+# Tag the image as latest for future caching
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', '${_IMAGE_NAME}:${_TAG_NAME}']
+  args: ['tag', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app/$BRANCH_NAME:${COMMIT_SHA}', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app:latest']
+  id: Tagging as latest
 
-# Deploy to Cloud Run.
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'gcloud'
-  args:
-  - 'run'
-  - 'deploy'
-  - '${_SERVICE_NAME}'
-  - '--image=${_IMAGE_NAME}:${_TAG_NAME}'
-  - '--platform=managed'
-  - '--region=${_REGION}'
-  - '--allow-unauthenticated'  # Optional: Remove this line if you don't want to allow unauthenticated access.
+# Push both the tagged image and latest
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app/$BRANCH_NAME:${COMMIT_SHA}']
+  id: Pushing the image to registry
 
-images:
-- '${_IMAGE_NAME}:${_TAG_NAME}'  # Reference the dynamic image name and tag.
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app:latest']
+  id: Pushing latest tag
+
+# Deploy container image to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['run', 'deploy', '${_SERVICE_NAME}', '--image', 'us-central1-docker.pkg.dev/$PROJECT_ID/narasimha8780/gcp-app/$BRANCH_NAME:${COMMIT_SHA}', '--region', 'us-central1', '--platform', 'managed', "--allow-unauthenticated"]
