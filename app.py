@@ -2,7 +2,30 @@
 from flask import Flask
 import os
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+resource = Resource.create({
+    ResourceAttributes.SERVICE_NAME: "gcp-app",
+    ResourceAttributes.SERVICE_NAMESPACE: "production"
+})
+
+provider = TracerProvider(resource=resource)
+trace.set_tracer_provider(provider)
+
+cloud_trace_exporter = CloudTraceSpanExporter()
+provider.add_span_processor(BatchSpanProcessor(cloud_trace_exporter))
+
+tracer = trace.get_tracer(__name__)
+
 app = Flask(__name__)
+
+FlaskInstrumentor().instrument_app(app)
 
 @app.route("/")
 def hello():
